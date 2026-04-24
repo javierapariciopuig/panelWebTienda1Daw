@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Firebase Connection</title>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <h1>🔥 Test de Conexión Firebase</h1>
+  
+  <div id="status" class="status info">Iniciando test...</div>
+  
+  <button onclick="testWrite()">✏️ Escribir datos de prueba</button>
+  <button onclick="testRead()">📖 Leer datos</button>
+  <button onclick="clearConsole()">🗑️ Limpiar consola</button>
+  
+  <div id="results"></div>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+    const resultsDiv = document.getElementById('results');
+    
+    function log(message, type = 'info') {
+      console.log(message);
+      statusDiv.className = `status ${type}`;
+      statusDiv.textContent = message;
+      
+      const result = document.createElement('div');
+      result.className = `status ${type}`;
+      result.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+      resultsDiv.appendChild(result);
+    }
+    
+    function clearConsole() {
+      resultsDiv.innerHTML = '';
+      log('Consola limpiada', 'info');
+    }
+    
+    function testWrite() {
+      log('🔥 Probando escritura en Firestore...', 'info');
+      
+      try {
+        const heroDoc = db.collection('HomePanel').doc('hero');
+        
+        const testData = {
+          title: 'Título de prueba ' + new Date().toLocaleTimeString(),
+          text: 'Texto de prueba ' + new Date().toLocaleTimeString(),
+          testTimestamp: new Date().toISOString()
+        };
+        
+        heroDoc.set(testData)
+          .then(() => {
+            log('✅ Escritura exitosa en HomePanel/hero', 'success');
+          })
+          .catch((error) => {
+            log(`❌ Error en escritura: ${error.message} (código: ${error.code})`, 'error');
+          });
+          
+      } catch (error) {
+        log(`❌ Error general: ${error.message}`, 'error');
+      }
+    }
+    
+    function testRead() {
+      log('🔥 Probando lectura desde Firestore...', 'info');
+      
+      try {
+        const heroDoc = db.collection('HomePanel').doc('hero');
+        
+        heroDoc.get()
+          .then((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              log(`✅ Lectura exitosa: ${JSON.stringify(data)}`, 'success');
+            } else {
+              log('📝 El documento no existe', 'info');
+            }
+          })
+          .catch((error) => {
+            log(`❌ Error en lectura: ${error.message} (código: ${error.code})`, 'error');
+          });
+          
+      } catch (error) {
+        log(`❌ Error general: ${error.message}`, 'error');
+      }
+    }
+    
+    // Test automático al cargar la página
+    window.addEventListener('DOMContentLoaded', () => {
+      log('🚀 Iniciando test de Firebase...', 'info');
+      
+      // Verificar inicialización
+      if (!firebase.apps.length) {
+        log('❌ Firebase no está inicializado', 'error');
+        return;
+      }
+      
+      log('✅ Firebase inicializado correctamente', 'success');
+      
+      // Verificar configuración
+      if (typeof db !== 'undefined') {
+        log('✅ Firestore disponible', 'success');
+        
+        // Test de conexión
+        const testDoc = db.collection('test').doc('connection');
+        testDoc.set({
+          connected: true,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          log('✅ Conexión a Firestore verificada', 'success');
+          testDoc.delete(); // Limpiar test
+        })
+        .catch((error) => {
+          log(`❌ Error de conexión: ${error.message}`, 'error');
+        });
+        
+      } else {
+        log('❌ Firestore no disponible', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

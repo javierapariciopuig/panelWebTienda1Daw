@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Inicio</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="PanelInicio.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Include Sidebar -->
+  <div id="sidebar-container"></div>
+  
+  <!-- Main Content -->
+  <main class="main">
+
+    <div class="top">
+      <h1>Gestión de Inicio</h1>
+      <p>Administra el contenido de la página principal</p>
+    </div>
+
+    <!-- HERO -->
+    <div class="card">
+
+      <div class="card-header">
+        <h2>Sección Hero</h2>
+        <button id="editBtn" class="btn-outline">✏️ Editar</button>
+      </div>
+
+      <div class="hero-box">
+        <h3 id="heroTitle">¡Bienvenido al Chiringuito De María y José! ⚾</h3>
+        <p id="heroText">Donde cada compra es un jonrón de calidad y sabor. Los mejores productos de alimentación con la pasión del béisbol.</p>
+      </div>
+
+    </div>
+
+    <!-- BOTONES -->
+    <div class="card">
+
+      <div class="card-header">
+        <h2>Gestión de Secciones</h2>
+      </div>
+
+      <div class="buttons-grid">
+
+        <a href="#" class="btn-card">🍴 Editar Productos</a>
+        <a href="#" class="btn-card">🌮 Editar Productos Latinos</a>
+        <a href="../Contacto/PanelContacto.html" class="btn-card">✉️ Editar Contacto</a>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  // Load sidebar from separate file
+  fetch('../sidebar.html')
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('sidebar-container').innerHTML = html;
+    })
+    .catch(error => console.error('Error loading sidebar:', error));
+
+  const editBtn = document.getElementById("editBtn");
+  const title = document.getElementById("heroTitle");
+  const text = document.getElementById("heroText");
+
+  // Referencia al documento en Firestore
+  const heroDoc = db.collection('HomePanel').doc('hero');
+
+  // Cargar datos desde Firestore
+  window.addEventListener("DOMContentLoaded", () => {
+    console.log("🔥 Cargando datos desde HomePanel/hero...");
+    
+    // Escuchar cambios en tiempo real
+    heroDoc.onSnapshot((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        console.log("📄 Datos cargados:", data);
+        
+        // Actualizar solo si hay datos en Firestore
+        if (data.title !== undefined) {
+          title.innerText = data.title;
+        }
+        if (data.text !== undefined) {
+          text.innerText = data.text;
+        }
+      } else {
+        // Si no existe, crear con valores actuales del HTML
+        heroDoc.set({
+          title: title.innerText,
+          text: text.innerText,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }, (error) => {
+      console.error("❌ Error cargando datos:", error);
+      // Usar valores del HTML como fallback
+    });
+  });
+
+  let editing = false;
+
+  editBtn.addEventListener("click", () => {
+    editing = !editing;
+
+    title.contentEditable = editing;
+    text.contentEditable = editing;
+
+    title.classList.toggle("editable", editing);
+    text.classList.toggle("editable", editing);
+
+    editBtn.innerText = editing ? "💾 Guardar" : "✏️ Editar";
+
+    // Si termina de editar → guardar en Firestore
+    if (!editing) {
+      heroDoc.set({
+        title: title.innerText,
+        text: text.innerText,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => {
+        console.log("Datos guardados en Firestore");
+        // También guardar en localStorage como backup
+        localStorage.setItem("heroTitle", title.innerText);
+        localStorage.setItem("heroText", text.innerText);
+      })
+      .catch((error) => {
+        console.error("Error guardando datos:", error);
+        // Fallback a localStorage si falla Firestore
+        localStorage.setItem("heroTitle", title.innerText);
+        localStorage.setItem("heroText", text.innerText);
+      });
+    }
+  });
+
+  // Auto-guardado mientras se edita (opcional)
+  let autoSaveTimeout;
+  title.addEventListener("input", () => {
+    if (editing) {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        if (editing) {
+          heroDoc.update({
+            title: title.innerText,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }, 1000); // Guardar después de 1 segundo de inactividad
+    }
+  });
+
+  text.addEventListener("input", () => {
+    if (editing) {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        if (editing) {
+          heroDoc.update({
+            text: text.innerText,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }, 1000);
+    }
+  });
+</script>
+
+</body>
+</html>

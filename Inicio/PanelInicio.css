@@ -1,0 +1,176 @@
+:root {
+  --red: #e50914;
+  --bg: #f5f7fa;
+  --text: #1e293b;
+  --muted: #64748b;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: var(--bg);
+}
+
+/* LAYOUT */
+.layout {
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: var(--red);
+  color: white;
+  min-height: 100vh;
+  padding: 25px 20px;
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.logo-box {
+  background: white;
+  color: var(--red);
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.brand h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.brand span {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* MENU */
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.menu a.active {
+  background: white;
+  color: var(--red);
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 40px;
+}
+
+/* TOP */
+.top h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.top p {
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+/* CARDS */
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 25px;
+  margin-top: 30px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+}
+
+/* HEADER CARD */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.card-header h2 {
+  font-size: 18px;
+  color: var(--text);
+}
+
+/* BOTÓN EDITAR */
+.btn-outline {
+  border: 1px solid #fdfdfd;
+  background: rgb(224, 224, 224);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* HERO */
+.hero-box {
+  background: linear-gradient(90deg, #ffe5e5, #e6f0ff);
+  padding: 25px;
+  border-radius: 12px;
+}
+
+.hero-box h3 {
+  font-size: 22px;
+  color: var(--text);
+}
+
+.hero-box p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+/* BOTONES GRID */
+.buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* BOTONES GRANDES */
+.btn-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.btn-card:hover {
+  background: #ffe5e5;
+  border-color: var(--red);
+  color: var(--red);
+  transform: translateY(-3px);
+}
+
+/* MODO EDICIÓN */
+.editable {
+  outline: 2px dashed var(--muted);
+  padding: 5px;
+  border-radius: 6px;
+  background: #fff;
+}
+
