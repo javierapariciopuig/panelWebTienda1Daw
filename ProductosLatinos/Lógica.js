@@ -10,7 +10,7 @@ firebaseProducts = [];
 
 // Estructura exacta de Firebase para Productos Latinos
 const FIREBASE_ROUTES_LATINOS = {
-    'Alimentacion': ['Arveja', 'Buñuelos'], // productoslatinos/Alimentacion/Arveja
+    'Alimentacion': ['Arveja', 'Buñuelos', 'Frejoles', 'Jamon'], // productoslatinos/Alimentacion/Arveja
     'Bebida': ['NoAlcoholicas'], // productoslatinos/Bebida/NoAlcoholicas (Bebida en singular)
     'Casero': ['Casero'], // productoslatinos/Casero/Casero (con 'o' al final)
     'Dulce': ['Dulce'], // productoslatinos/Dulce/Dulce (documento: Dulce, subcolección: Dulce)
