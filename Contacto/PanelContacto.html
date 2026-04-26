@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="PanelContacto.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Include Sidebar -->
+  <div id="sidebar-container"></div>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="top">
+      <div>
+        <h1>Información de Contacto</h1>
+        <p>Gestiona los datos de contacto de la tienda</p>
+      </div>
+
+      <button class="btn-edit">✏️ Editar</button>
+    </div>
+
+    <!-- CARDS -->
+    <div class="cards">
+
+      <div class="card">
+        <div class="icon red">✉️</div>
+        <div>
+          <h4>Email</h4>
+          <p id="email">info@ChiringuitoDeMaríaYJosé.com</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icon blue">📞</div>
+        <div>
+          <h4>Teléfono</h4>
+          <p id="telefono">+34 613 98 49 65</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icon green">📍</div>
+        <div>
+          <h4>Dirección</h4>
+          <p id="direccion">C.Maíz, 11 28045 Madrid, España</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icon purple">⏰</div>
+        <div>
+          <h4>Horario</h4>
+          <p id="horario">Lunes - Domingo: 10:00 - 00:00</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview">
+      <h3>Vista Previa del Contacto</h3>
+
+      <div class="preview-box">
+        <h2>Contáctanos</h2>
+
+        <div class="preview-grid">
+          <div id="preview-email">✉️ info@ChiringuitoDeMaríaYJosé.com</div>
+          <div id="preview-telefono">📞 +34 613 98 49 65</div>
+          <div id="preview-direccion">📍 C.Maíz, 11 28045 Madrid, España</div>
+          <div id="preview-horario">⏰ Lunes - Domingo: 10:00 - 00:00</div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- SCRIPT -->
+<script>
+  // Load sidebar from separate file
+  fetch('../sidebar.html')
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('sidebar-container').innerHTML = html;
+    })
+    .catch(error => console.error('Error loading sidebar:', error));
+
+  const btn = document.querySelector(".btn-edit");
+  let editando = false;
+
+  const campos = ["email", "telefono", "direccion", "horario"];
+  const firestoreFields = {
+    email: "info_email",
+    telefono: "info_tel", 
+    direccion: "info_direccion",
+    horario: "info_horario"
+  };
+
+  // Referencia al documento en Firestore
+  const contactoDoc = db.collection('Contact').doc('contact_texts');
+
+  window.onload = () => {
+    console.log(" Cargando datos desde Contact/contact_texts...");
+    
+    contactoDoc.onSnapshot((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        console.log(" Datos de contacto cargados:", data);
+        
+        // Solo actualizar si NO estamos en modo edición
+        if (!editando) {
+          campos.forEach(campo => {
+            const firestoreField = firestoreFields[campo];
+            if (data[firestoreField] !== undefined) {
+              document.getElementById(campo).innerText = data[firestoreField];
+            }
+          });
+          actualizarPreview();
+        }
+      } else {
+        // Si no existe, crear con valores actuales del HTML
+        const contactoData = {};
+        campos.forEach(campo => {
+          const elemento = document.getElementById(campo);
+          contactoData[firestoreFields[campo]] = elemento.innerText;
+        });
+        
+        contactoDoc.set({
+          ...contactoData,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }, (error) => {
+      console.error(" Error cargando datos de contacto:", error);
+      // Fallback a localStorage si hay error
+      campos.forEach(campo => {
+        const valor = localStorage.getItem(campo);
+        if (valor) document.getElementById(campo).innerText = valor;
+      });
+      actualizarPreview();
+    });
+  };
+
+  btn.addEventListener("click", () => {
+    if (!editando) {
+      campos.forEach(campo => {
+        const el = document.getElementById(campo);
+        const valor = el.innerText;
+
+        el.innerHTML = `
+          <input class="input-edit" id="input-${campo}" value="${valor}">
+        `;
+      });
+
+      activarLivePreview();
+      btn.innerText = "Guardar";
+      editando = true;
+
+    } else {
+      const contactoData = {};
+      
+      campos.forEach(campo => {
+        const input = document.getElementById(`input-${campo}`);
+        const valor = input.value;
+
+        document.getElementById(campo).innerText = valor;
+        contactoData[firestoreFields[campo]] = valor;
+        localStorage.setItem(campo, valor); // Backup en localStorage
+      });
+
+      // Guardar en Firestore
+      contactoDoc.update({
+        ...contactoData,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => {
+        console.log("Datos de contacto guardados en Firestore");
+      })
+      .catch((error) => {
+        console.error("Error guardando datos de contacto:", error);
+      });
+
+      actualizarPreview();
+      btn.innerText = "Editar";
+      editando = false;
+    }
+  });
+
+  /* LIVE PREVIEW con sincronización a Firestore */
+  function activarLivePreview() {
+    campos.forEach(campo => {
+      const input = document.getElementById(`input-${campo}`);
+
+      input.addEventListener("input", () => {
+        // Actualizar preview inmediatamente
+        document.getElementById(`preview-${campo}`).innerText =
+          getIcon(campo) + " " + input.value;
+      
+        // Auto-guardar en Firestore después de 1 segundo de inactividad
+        clearTimeout(input.autoSaveTimeout);
+        input.autoSaveTimeout = setTimeout(() => {
+          if (editando) {
+            const valor = input.value;
+            const firestoreField = firestoreFields[campo];
+            contactoDoc.update({
+              [firestoreField]: valor,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+              console.log(`Campo ${campo} auto-guardado en Firestore`);
+            }).catch((error) => {
+              console.error(`Error auto-guardando ${campo}:`, error);
+            });
+          }
+        }, 1000);
+      });
+    });
+  }
+
+  /* ICONOS preview */
+  function getIcon(campo) {
+    switch(campo) {
+      case "email": return "✉️";
+      case "telefono": return "📞";
+      case "direccion": return "📍";
+      case "horario": return "⏰";
+    }
+  }
+
+  /* fallback inicial */
+  function actualizarPreview() {
+    document.getElementById("preview-email").innerText =
+      "✉️ " + document.getElementById("email").innerText;
+
+    document.getElementById("preview-telefono").innerText =
+      "📞 " + document.getElementById("telefono").innerText;
+
+    document.getElementById("preview-direccion").innerText =
+      "📍 " + document.getElementById("direccion").innerText;
+
+    document.getElementById("preview-horario").innerText =
+      "⏰ " + document.getElementById("horario").innerText;
+  }
+</script>
+
+</body>
+</html>
